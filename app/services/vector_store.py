@@ -47,7 +47,7 @@ def upsert_chunks(chunks: List[Dict[str, Any]]) -> None:
 
         vectors_to_upsert.append({
             "id": vector_id,
-            "values": embeddings[i].tolist(),
+            "values": embeddings[i],
             "metadata": metadata
         })
 

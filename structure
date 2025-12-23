@@ -1,35 +1,38 @@
 explainable-rag-chatbot/
 ├── app/
 │   ├── __init__.py
-│   ├── main.py                  # FastAPI app entry point
+│   ├── main.py                  # Entry point
 │   ├── api/
 │   │   ├── __init__.py
-│   │   └── routes.py            # All endpoints
+│   │   └── routes.py            # Endpoints
 │   ├── core/
 │   │   ├── __init__.py
-│   │   └── config.py            # All settings from .env
+│   │   └── config.py            # Environment variables
 │   ├── services/
 │   │   ├── __init__.py
-│   │   ├── document_processor.py # PDF/TXT → text extraction + chunking + upsert to Pinecone
-│   │   ├── embedding_service.py  # OpenAI embeddings API wrapper
-│   │   ├── pinecone_service.py   # Pinecone init + upsert + query
-│   │   ├── llm_service.py        # OpenAI GPT generation + prompts
-│   │   ├── rag_pipeline.py       # Full RAG flow: retrieve → verify → generate → explain
-│   │   └── verification.py       # Claim verification + confidence scoring
+│   │   ├── document_processor.py # PDF processing
+│   │   ├── embedding_service.py  # OpenAI Embeddings
+│   │   ├── vector_store.py       # Wrapper for Chroma OR Pinecone
+│   │   ├── llm_service.py        # OpenAI ChatCompletion
+│   │   ├── rag_pipeline.py       # The Orchestrator
+│   │   └── verification.py       # Compliance/Scoring Logic
 │   ├── models/
 │   │   ├── __init__.py
-│   │   └── schemas.py            # Pydantic request/response models
+│   │   └── schemas.py            # Pydantic Models
 │   ├── database/
 │   │   ├── __init__.py
-│   │   └── db.py                 # SQLite for chat history & document metadata
+│   │   ├── connection.py         # SQLite connection setup
+│   │   └── repository.py         # SQL queries (Save chat, Get history)
 │   └── utils/
 │       ├── __init__.py
-│       └── helpers.py            # Chunking logic, text cleaning, etc.
+│       └── helpers.py            # Text cleaning, hash generation
 ├── data/
-│   ├── uploads/                  # Temporary storage for uploaded files
-│   └── sqlite.db                 # Chat history & document metadata
-├── .env                          # All keys and config values
-├── .env.example
+│   ├── uploads/
+│   └── chat_history.db           # SQLite file
+├── tests/                        
+│   ├── __init__.py
+│   └── test_rag_logic.py
+├── .env
 ├── requirements.txt
 ├── README.md
-└── run.sh                        # Optional start script
+└── run.sh
