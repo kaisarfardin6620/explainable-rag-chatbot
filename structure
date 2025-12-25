@@ -1,38 +1,44 @@
-explainable-rag-chatbot/
+explainable-rag-kg-chatbot/
 ├── app/
 │   ├── __init__.py
-│   ├── main.py                  # Entry point
+│   ├── main.py                  # Entry point (FastAPI server)
 │   ├── api/
 │   │   ├── __init__.py
-│   │   └── routes.py            # Endpoints
+│   │   └── routes.py            # Endpoints: /upload, /chat, /history, /health
 │   ├── core/
 │   │   ├── __init__.py
-│   │   └── config.py            # Environment variables
+│   │   └── config.py            # Environment variables (OpenAI, Pinecone, Neo4j)
 │   ├── services/
 │   │   ├── __init__.py
-│   │   ├── document_processor.py # PDF processing
-│   │   ├── embedding_service.py  # OpenAI Embeddings
-│   │   ├── vector_store.py       # Wrapper for Chroma OR Pinecone
-│   │   ├── llm_service.py        # OpenAI ChatCompletion
-│   │   ├── rag_pipeline.py       # The Orchestrator
-│   │   └── verification.py       # Compliance/Scoring Logic
+│   │   ├── document_processor.py # PDF/TXT ingestion, semantic chunking
+│   │   ├── kg_builder.py         # Document → KG triples (RDF/Neo4j)
+│   │   ├── embedding_service.py  # OpenAI embeddings for chunks
+│   │   ├── vector_store.py       # Pinecone/Chroma wrapper for chunk embeddings
+│   │   ├── kg_store.py           # KG storage + query interface (Neo4j / rdflib)
+│   │   ├── llm_service.py        # ChatCompletion API wrapper
+│   │   ├── rag_pipeline.py       # Orchestrates RAG + KG retrieval + LLM reasoning
+│   │   ├── verification.py       # Claim-level verification + refusal logic
+│   │   └── explanation.py        # Generates structured explanations + confidence
 │   ├── models/
 │   │   ├── __init__.py
-│   │   └── schemas.py            # Pydantic Models
+│   │   └── schemas.py            # Pydantic models for requests/responses
 │   ├── database/
 │   │   ├── __init__.py
 │   │   ├── connection.py         # SQLite connection setup
-│   │   └── repository.py         # SQL queries (Save chat, Get history)
+│   │   └── repository.py         # Save chat, KG provenance, history retrieval
 │   └── utils/
 │       ├── __init__.py
-│       └── helpers.py            # Text cleaning, hash generation
+│       ├── helpers.py            # Text cleaning, hash generation, triple quality scoring
+│       └── kg_utils.py           # Graph operations, path search, triple confidence
 ├── data/
-│   ├── uploads/
+│   ├── uploads/                  # Raw PDFs/TXT
+│   ├── kg_cache/                 # Optional RDF/serialized KG for persistence
 │   └── chat_history.db           # SQLite file
-├── tests/                        
+├── tests/
 │   ├── __init__.py
-│   └── test_rag_logic.py
-├── .env
+│   ├── test_rag_kg_pipeline.py   # RAG + KG integration tests
+│   └── test_verification.py      # Claim verification, refusal, confidence
+├── .env                          # API keys: OpenAI, Pinecone, Neo4j
 ├── requirements.txt
 ├── README.md
-└── run.sh
+└── run.sh                        # Start FastAPI server
