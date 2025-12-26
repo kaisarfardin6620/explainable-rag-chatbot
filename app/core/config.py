@@ -12,6 +12,11 @@ class Settings(BaseSettings):
     upload_folder: str
     sqlite_db_path: str
 
+    neo4j_uri: str
+    neo4j_username: str
+    neo4j_password: str
+    neo4j_database: str
+
     top_k: int
     min_similarity_threshold: float
 

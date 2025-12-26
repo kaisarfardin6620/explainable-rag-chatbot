@@ -3,7 +3,9 @@ uvicorn[standard]==0.30.6
 pydantic==2.9.2
 pydantic-settings==2.5.2
 openai==1.51.0
-pinecone-client==3.2.2          # New
+pinecone-client==3.2.2
 pdfplumber==0.11.4
 sqlite-utils==3.37
 python-multipart==0.0.9
+numpy==1.26.4
+neo4j~=5.28.0

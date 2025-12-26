@@ -3,7 +3,7 @@ from app.api.routes import router
 
 app = FastAPI(
     title="Explainable RAG Chatbot",
-    description="Compliance-grade single-user RAG with citations & confidence",
+    description="Compliance-grade RAG with citations & confidence",
     version="1.0.0"
 )
 

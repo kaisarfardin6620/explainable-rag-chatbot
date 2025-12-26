@@ -36,57 +36,50 @@ def upsert_chunks(chunks: List[Dict[str, Any]]) -> None:
     texts = [chunk["text"] for chunk in chunks]
     embeddings = get_embeddings(texts)
 
-    vectors_to_upsert = []
+    vectors = []
     for i, chunk in enumerate(chunks):
-        vector_id = str(uuid.uuid4())
-        metadata = {
-            "text": chunk["text"],
-            "document": chunk["metadata"].get("document", "unknown.pdf"),
-            "page": int(chunk["metadata"].get("page", 0)),
-        }
-
-        vectors_to_upsert.append({
-            "id": vector_id,
-            "values": embeddings[i],
-            "metadata": metadata
+        chunk_id = str(uuid.uuid4())
+        vectors.append({
+            "id": chunk_id,
+            "values": list(embeddings[i]),
+            "metadata": {
+                "document": chunk["metadata"].get("document", "unknown.pdf"),
+                "page": int(chunk["metadata"].get("page", 0)),
+            }
         })
 
-    batch_size = 100
-    for i in range(0, len(vectors_to_upsert), batch_size):
-        batch = vectors_to_upsert[i:i + batch_size]
-        index.upsert(vectors=batch)
+    index.upsert(vectors=vectors)
 
 
 def query(
     question: str,
     top_k: int = 5,
-    min_similarity: float = 0.75
+    min_similarity: float = 0.65
 ) -> List[Dict[str, Any]]:
-    query_embedding = get_embeddings([question])[0]
+    query_embedding = list(get_embeddings([question])[0])
 
     results = index.query(
-        vector=query_embedding.tolist(),
+        vector=query_embedding,
         top_k=top_k * 2,
-        include_metadata=True,
-        include_values=False
+        include_metadata=True
     )
 
-    relevant_chunks = []
+    matches = []
     for match in results.matches:
         if match.score < min_similarity:
             continue
 
-        relevant_chunks.append({
-            "text": match.metadata["text"],
+        matches.append({
+            "chunk_id": match.id,
             "document": match.metadata["document"],
             "page": match.metadata["page"],
             "similarity": round(match.score, 4)
         })
 
-        if len(relevant_chunks) >= top_k:
+        if len(matches) >= top_k:
             break
 
-    return relevant_chunks
+    return matches
 
 
 def delete_all_vectors() -> None:
