@@ -9,21 +9,19 @@ def extract_claims(answer: str) -> List[str]:
     Returns list of factual statements.
     """
     prompt = f"""
-You are a claim extraction expert.
-Break the following answer into individual atomic, verifiable claims.
-Return ONLY a JSON list of strings. Each string is one clear factual claim.
+    You are a claim extraction expert.
+    Break the following answer into individual atomic, verifiable claims.
+    Return ONLY a JSON object with this format: {{ "claims": ["claim 1", "claim 2"] }}
 
-Rules:
-- One claim per fact
-- No reasoning, no questions
-- Include quantities, dates, entities, relations
-- If no clear claims, return empty list
+    Rules:
+    - One claim per fact
+    - No reasoning, no questions
+    - Include quantities, dates, entities, relations
+    - If no clear claims, return empty list
 
-Answer:
-{answer}
-
-Claims:
-    """.strip()
+    Answer:
+    {answer}
+    """
 
     raw = generate_structured(
         prompt=prompt,
@@ -33,11 +31,11 @@ Claims:
 
     try:
         data = json.loads(raw)
-        if isinstance(data, list):
-            return [c.strip() for c in data if c.strip()]
-        elif isinstance(data, dict) and "claims" in data:
+        if isinstance(data, dict) and "claims" in data:
             return [c.strip() for c in data["claims"] if c.strip()]
-    except:
+        if isinstance(data, list):
+            return data
+    except Exception:
         pass
 
     sentences = re.split(r'(?<=[.!?])\s+', answer)
@@ -54,6 +52,8 @@ def claim_supported_by_text(claim: str, rag_evidence: List[Dict]) -> bool:
         text = ev["text"].lower()
         claim_words = set(claim_lower.split())
         text_words = set(text.split())
+        if not claim_words:
+            continue
         if len(claim_words & text_words) / len(claim_words) > 0.5:
             return True
     return False
@@ -69,9 +69,9 @@ def claim_supported_by_kg(claim: str, kg_evidence: List[Dict]) -> bool:
         if "path" in path:
             for rel in path["path"]:
                 rel_desc = rel.get("description", "").lower()
-                rel_type = rel["type"].lower()
+                rel_type = rel.get("type", "").lower()
                 full_rel = f"{rel_type} {rel_desc}".strip()
-                if any(key in claim_lower for key in [rel_type, rel_desc, full_rel]):
+                if any(key in claim_lower for key in [rel_type, rel_desc, full_rel] if len(key) > 3):
                     return True
     return False
 
@@ -94,12 +94,19 @@ def verify_claims(answer: str, evidence: Dict[str, Any]) -> Dict[str, Any]:
     kg_evidence = evidence.get("kg_evidence", [])
 
     unsupported = []
+    rag_count = 0
+    kg_count = 0
+
     for claim in claims:
         supported = False
+        
         if claim_supported_by_text(claim, rag_evidence):
             supported = True
-        elif claim_supported_by_kg(claim, kg_evidence):
+            rag_count += 1
+        
+        if not supported and claim_supported_by_kg(claim, kg_evidence):
             supported = True
+            kg_count += 1
 
         if not supported:
             unsupported.append(claim)
@@ -111,6 +118,6 @@ def verify_claims(answer: str, evidence: Dict[str, Any]) -> Dict[str, Any]:
         "unsupported": unsupported,
         "unsupported_count": len(unsupported),
         "support_ratio": support_ratio,
-        "rag_support_count": sum(1 for c in claims if claim_supported_by_text(c, rag_evidence)),
-        "kg_support_count": sum(1 for c in claims if claim_supported_by_kg(c, kg_evidence))
+        "rag_support_count": rag_count,
+        "kg_support_count": kg_count
     }

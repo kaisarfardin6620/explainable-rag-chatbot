@@ -2,7 +2,7 @@ import json
 from typing import List, Dict, Any
 from neo4j import GraphDatabase
 from app.core.config import settings
-from app.services.llm_service import llm_service  
+from app.services.llm_service import client as openai_client 
 
 driver = GraphDatabase.driver(
     settings.neo4j_uri,
@@ -42,7 +42,7 @@ def extract_entities_relations(text: str) -> Dict[str, Any]:
     """
     Use OpenAI to extract structured entities and relations from chunk text.
     """
-    response = llm_service.client.chat.completions.create(
+    response = openai_client.chat.completions.create(
         model=settings.openai_model,
         messages=[
             {"role": "system", "content": "You are a precise knowledge extraction system."},
@@ -55,8 +55,6 @@ def extract_entities_relations(text: str) -> Dict[str, Any]:
 
     try:
         content = response.choices[0].message.content.strip()
-        if content.startswith("```json"):
-            content = content[7:-3].strip()
         return json.loads(content)
     except Exception as e:
         print(f"KG extraction failed: {e}")
@@ -136,12 +134,9 @@ def build_kg_from_chunks(
                     page=page
                 )
 
-
 def clear_kg() -> None:
-    """Utility: clear entire graph (for testing)"""
     with driver.session() as session:
         session.run("MATCH (n) DETACH DELETE n")
-
 
 def close_driver():
     driver.close()
