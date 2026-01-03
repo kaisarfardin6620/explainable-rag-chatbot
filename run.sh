@@ -1,0 +1,7 @@
+#!/bin/bash
+echo "Starting Explainable KG-RAG Chatbot..."
+mkdir -p data/uploads
+mkdir -p data/kg_cache
+
+# Run Uvicorn
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload

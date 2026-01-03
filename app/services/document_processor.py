@@ -1,5 +1,5 @@
 import uuid
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Union
 from pathlib import Path
 import pdfplumber
 from app.core.config import settings
@@ -9,11 +9,14 @@ from app.services.kg_builder import build_kg_from_chunks
 from app.database.repository import save_chunks, get_or_create_document_id
 from app.utils.helpers import semantic_chunk_text
 
-def process_uploaded_file(file_path: Path, filename: str) -> Dict[str, Any]:
+def process_uploaded_file(file_path: Union[Path, str], filename: str) -> Dict[str, Any]:
     """
     Full document processing pipeline.
     Called from /upload endpoint.
     """
+    if isinstance(file_path, str):
+        file_path = Path(file_path)
+
     raw_pages = extract_text_with_pages(file_path)
 
     chunks = []
@@ -84,26 +87,3 @@ def extract_text_with_pages(file_path: Path) -> List[tuple[int, str]]:
         raise RuntimeError(f"Failed to extract text from PDF: {e}")
 
     return text_pages
-
-
-def semantic_chunk_text(text: str, max_tokens: int = 800) -> List[str]:
-    """
-    Simple paragraph-based chunking (good baseline).
-    Replace with LangChain RecursiveCharacterTextSplitter for better semantics.
-    """
-    paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
-    chunks = []
-    current_chunk = ""
-
-    for para in paragraphs:
-        if len(current_chunk) + len(para) + 2 < max_tokens * 4:
-            current_chunk += ("\n\n" + para if current_chunk else para)
-        else:
-            if current_chunk:
-                chunks.append(current_chunk)
-            current_chunk = para
-
-    if current_chunk:
-        chunks.append(current_chunk)
-
-    return chunks if chunks else [text[:max_tokens*4]]
